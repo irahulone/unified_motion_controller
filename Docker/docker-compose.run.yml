@@ -1,0 +1,18 @@
+services:  
+  multi_robots:
+    container_name: multi_robots
+    build: 
+      context: ..
+      dockerfile: Docker/Dockerfile
+    network_mode: "host"
+    environment:
+      - DISPLAY=${DISPLAY}      
+    stdin_open: true    # Keep stdin open for an interactive shell
+    tty: true    
+    command: > 
+      bash -c "source /opt/ros/jazzy/setup.bash \
+        colcon build \
+        source /root/multi_robots_ws/install/setup.bash \
+        ros2 launch cluster_node complete_cluster.launch.py & \ 
+        wait"
+    

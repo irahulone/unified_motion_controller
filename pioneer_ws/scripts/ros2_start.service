@@ -1,0 +1,18 @@
+
+[Unit]
+Description=ROS 2 Auto Start
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Environment="ROBOT_ID=p4"
+User=pioneer-iv
+WorkingDirectory=/home/pioneer-iv/ros2_ws
+ExecStart=/bin/bash /home/pioneer-iv/ros2_ws/pioneer_ws/scripts/start_ros2.sh
+Restart=always
+Environment="DISPLAY=:0"
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
