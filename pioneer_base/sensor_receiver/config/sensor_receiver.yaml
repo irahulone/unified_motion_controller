@@ -1,0 +1,3 @@
+sensor_receiver:
+  ros__parameters:
+    robot_id_list: ["p2", "p3", "p4"]

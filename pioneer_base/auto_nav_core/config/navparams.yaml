@@ -1,0 +1,8 @@
+nav_controller:
+  ros__parameters:
+    robot_id_list: ["p2", "p3", "p5"]
+    rover_formation: [5.0, 0.0, 0.0,  5.0, 120.0, 0.0,  5.0, 240.0, 0.0]
+    scaling_coor: 0.1
+    rotating_coor: 1.0
+    scaling_max: 10.0
+    scaling_min: 2.0

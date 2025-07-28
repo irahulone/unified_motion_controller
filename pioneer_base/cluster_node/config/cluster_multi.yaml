@@ -1,0 +1,4 @@
+cluster_controller:
+  ros__parameters:
+    robot_id_list: ["p2", "p3", "p4"] #list of possible robots to choose from
+    cluster_size: 3 #number of robots to use

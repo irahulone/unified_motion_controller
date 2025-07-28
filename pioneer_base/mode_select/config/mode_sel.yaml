@@ -1,0 +1,3 @@
+mode_controller:
+  ros__parameters:
+    robot_id_list: ["p2", "p3", "p5"]
