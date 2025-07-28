@@ -1,0 +1,224 @@
+<?xml version="1.0"?>
+<robot  xmlns:xacro="http://ros.org/wiki/xacro"
+        name="rover" >
+
+    <xacro:arg name="mesh_enabled" default="true" />
+    <xacro:arg name="robot_namespace" default="/"/>
+
+    <link name="world"/>
+
+    <link name="x_axis"/>
+    <link name="y_axis"/>
+    <link name="theta_axis"/>
+    <link name="x_axis2"/>
+    <link name="y_axis2"/>
+    <link name="theta_axis2"/>
+    <link name="x_axis3"/>
+    <link name="y_axis3"/>
+    <link name="theta_axis3"/>
+
+    <link   name =  "base_link"/>
+    <link   name =  "base_link2"/>
+    <link   name =  "base_link3"/>
+
+    <link   name = "rover_link">    <!-- bottom of your robot -->
+        <inertial>
+            <origin xyz="0.0 0 0.0" rpy="0 0 0"/>
+            <mass value="3.978"/>
+            <inertia ixx="0.021858680" ixy="0.0" ixz="0.010020353"
+                    iyy="0.078572349" iyz="-0.0"
+                    izz="0.091971324"/>
+        </inertial>
+        <visual>
+            <xacro:if value="$(arg mesh_enabled)">
+                <origin xyz="0 0 -0.5" rpy="0.0 0.0 0.0" />
+                <geometry>
+                    <mesh filename="package://rover_description/meshes/pioneer_3dx.stl" scale="0.001 0.001 0.001"/>
+                </geometry>
+            </xacro:if>
+            <xacro:unless value="$(arg mesh_enabled)">
+                <origin xyz="-0.125 0 -0.51" rpy="0 0 0" />
+                <geometry>
+                    <box size="0.25 0.25 0.02" />
+                </geometry>
+                <material name="Blue" />
+            </xacro:unless>
+        </visual>
+        <collision>
+            <origin xyz="-0.125 0 -0.51" rpy="0 0 0" />
+            <geometry>
+                <box size="0.25 0.25 0.02" />
+            </geometry>
+        </collision>
+    </link>
+
+    
+    <link   name = "rover_link2">    <!-- bottom of your robot -->
+        <inertial>
+            <origin xyz="0.0 0 0.0" rpy="0 0 0"/>
+            <mass value="3.978"/>
+            <inertia ixx="0.021858680" ixy="0.0" ixz="0.010020353"
+                    iyy="0.078572349" iyz="-0.0"
+                    izz="0.091971324"/>
+        </inertial>
+        <visual>
+            <xacro:if value="$(arg mesh_enabled)">
+                <origin xyz="0 0 -0.5" rpy="0.0 0.0 0.0" />
+                <geometry>
+                    <mesh filename="package://rover_description/meshes/pioneer_3dx.stl" scale="0.001 0.001 0.001"/>
+                </geometry>
+            </xacro:if>
+            <xacro:unless value="$(arg mesh_enabled)">
+                <origin xyz="-0.125 0 -0.51" rpy="0 0 0" />
+                <geometry>
+                    <box size="0.25 0.25 0.02" />
+                </geometry>
+                <material name="Blue" />
+            </xacro:unless>
+        </visual>
+        <collision>
+            <origin xyz="-0.125 0 -0.51" rpy="0 0 0" />
+            <geometry>
+                <box size="0.25 0.25 0.02" />
+            </geometry>
+        </collision>
+    </link>
+
+    
+    <link   name = "rover_link3">    <!-- bottom of your robot -->
+        <inertial>
+            <origin xyz="0.0 0 0.0" rpy="0 0 0"/>
+            <mass value="3.978"/>
+            <inertia ixx="0.021858680" ixy="0.0" ixz="0.010020353"
+                    iyy="0.078572349" iyz="-0.0"
+                    izz="0.091971324"/>
+        </inertial>
+        <visual>
+            <xacro:if value="$(arg mesh_enabled)">
+                <origin xyz="0 0 -0.5" rpy="0.0 0.0 0.0" />
+                <geometry>
+                    <mesh filename="package://rover_description/meshes/pioneer_3dx.stl" scale="0.001 0.001 0.001"/>
+                </geometry>
+            </xacro:if>
+            <xacro:unless value="$(arg mesh_enabled)">
+                <origin xyz="-0.125 0 -0.51" rpy="0 0 0" />
+                <geometry>
+                    <box size="0.25 0.25 0.02" />
+                </geometry>
+                <material name="Blue" />
+            </xacro:unless>
+        </visual>
+        <collision>
+            <origin xyz="-0.125 0 -0.51" rpy="0 0 0" />
+            <geometry>
+                <box size="0.25 0.25 0.02" />
+            </geometry>
+        </collision>
+    </link>
+
+
+
+
+
+    <joint name="w_to_x" type="prismatic">
+       <parent link="world"/>
+       <child link="x_axis"/>
+       <origin xyz="1.0 0.0 0.0" rpy="0 0 0" />
+       <axis xyz="1 0 0"/> 
+       <limit lower="-20.0" upper="20.0" effort="0.5" velocity="0.5"/>
+    </joint>
+    <joint name="x_to_y" type="prismatic">
+       <parent link="theta_axis"/>
+       <child link="y_axis"/>
+       <origin xyz="0.0 1.0 0.0" rpy="0 0 0" />
+       <axis xyz="0 1 0"/> 
+       <limit lower="-20.0" upper="20.0" effort="0.5" velocity="0.5"/>
+    </joint>
+    <joint name="y_to_t" type="revolute">
+       <parent link="y_axis"/>
+       <child link="base_link"/>
+       <axis xyz="0 0 1"/>
+       <limit lower="-3" upper="3" effort="0.5" velocity="0.5"/>
+    </joint>
+     <joint name="t_to_b" type="fixed">
+      <parent link="x_axis"/>
+      <child link="theta_axis"/>
+    </joint>
+
+    <joint name = "base_joint"  type = "fixed">
+        <parent link="base_link"/>
+        <child link="rover_link"/>
+        <origin xyz="0.0 0.0 0.5" rpy="0 0 0" />
+        <axis xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+
+
+
+    <joint name="w_to_x2" type="prismatic">
+       <parent link="world"/>
+       <child link="x_axis2"/>
+       <axis xyz="1 0 0"/> 
+       <origin xyz="1.0 0.0 0.0" rpy="0 0 0" />
+       <limit lower="-20.0" upper="20.0" effort="0.5" velocity="0.5"/>
+    </joint>
+    <joint name="x_to_y2" type="prismatic">
+       <parent link="theta_axis2"/>
+       <child link="y_axis2"/>
+       <axis xyz="0 1 0"/> 
+        <origin xyz="0.0 -1.0 0.0" rpy="0 0 0" />
+       <limit lower="-20.0" upper="20.0" effort="0.5" velocity="0.5"/>
+    </joint>
+    <joint name="y_to_t2" type="revolute">
+       <parent link="y_axis2"/>
+       <child link="base_link2"/>
+       <axis xyz="0 0 1"/>
+       <limit lower="-3" upper="3" effort="0.5" velocity="0.5"/>
+    </joint>
+     <joint name="t_to_b2" type="fixed">
+      <parent link="x_axis2"/>
+      <child link="theta_axis2"/>
+    </joint>
+
+    <joint name = "base_joint2"  type = "fixed">
+        <parent link="base_link2"/>
+        <child link="rover_link2"/>
+        <origin xyz="0.0 0.0 0.5" rpy="0 0 0" />
+        <axis xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+
+
+
+    <joint name="w_to_x3" type="prismatic">
+       <parent link="world"/>
+       <child link="x_axis3"/>
+       <axis xyz="1 0 0"/> 
+       <limit lower="-20.0" upper="20.0" effort="0.5" velocity="0.5"/>
+    </joint>
+    <joint name="x_to_y3" type="prismatic">
+       <parent link="theta_axis3"/>
+       <child link="y_axis3"/>
+       <axis xyz="0 1 0"/> 
+       <limit lower="-20.0" upper="20.0" effort="0.5" velocity="0.5"/>
+    </joint>
+    <joint name="y_to_t3" type="revolute">
+       <parent link="y_axis3"/>
+       <child link="base_link3"/>
+       <axis xyz="0 0 1"/>
+       <limit lower="-3" upper="3" effort="0.5" velocity="0.5"/>
+    </joint>
+     <joint name="t_to_b3" type="fixed">
+      <parent link="x_axis3"/>
+      <child link="theta_axis3"/>
+    </joint>
+
+    <joint name = "base_joint3"  type = "fixed">
+        <parent link="base_link3"/>
+        <child link="rover_link3"/>
+        <origin xyz="0.0 0.0 0.5" rpy="0 0 0" />
+        <axis xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+
+
+
+
+</robot>

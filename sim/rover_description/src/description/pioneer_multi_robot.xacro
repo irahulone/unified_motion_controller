@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="multi_rover">
+  <xacro:arg name="num_robots" default="3"/>
+  <xacro:arg name="mesh_enabled" default="true"/>
+
+  <link name="world"/>
+
+  <xacro:macro name="p_instance" params="id x y">
+      <link name="p${id}_base_link"/>
+      <link name="p${id}_x_axis"/>
+      <link name="p${id}_y_axis"/>
+      <link name="p${id}_theta_axis"/>
+
+      <link name="p${id}_rover_link">
+        <inertial>
+          <origin xyz="0.0 0 0.0" rpy="0 0 0"/>
+          <mass value="3.978"/>
+          <inertia ixx="0.021858680" ixy="0.0" ixz="0.010020353"
+                    iyy="0.078572349" iyz="0.0"
+                    izz="0.091971324"/>
+        </inertial>
+        <visual>
+          <xacro:if value="$(arg mesh_enabled)">
+            <origin xyz="-0.1 0.3 -0.5" rpy="0.0 0.0 0.0"/>
+            <geometry>
+              <mesh filename="package://rover_description/meshes/pioneer_3dx.stl"
+                    scale="0.001 0.001 0.001"/>
+            </geometry>
+          </xacro:if>
+        </visual>
+      </link>
+
+      <joint name="p${id}_w_to_x" type="prismatic">
+        <parent link="world"/>
+        <child link="p${id}_x_axis"/>
+        <axis xyz="1 0 0"/> 
+        <origin xyz="${x} 0.0 0.0" rpy="0 0 0" />
+        <limit lower="-20.0" upper="20.0" effort="0.5" velocity="0.5"/>
+      </joint>
+      <joint name="p${id}_x_to_y" type="prismatic">
+        <parent link="p${id}_theta_axis"/>
+        <child link="p${id}_y_axis"/>
+        <axis xyz="0 1 0"/> 
+        <origin xyz="0.0 ${y} 0.0" rpy="0 0 0" />
+        <limit lower="-20.0" upper="20.0" effort="0.5" velocity="0.5"/>
+      </joint>
+      <joint name="p${id}_y_to_t" type="revolute">
+        <parent link="p${id}_y_axis"/>
+        <child link="p${id}_base_link"/>
+        <axis xyz="0 0 1"/>
+        <limit lower="-3" upper="3" effort="0.5" velocity="0.5"/>
+      </joint>
+      <joint name="p${id}_t_to_b" type="fixed">
+        <parent link="p${id}_x_axis"/>
+        <child link="p${id}_theta_axis"/>
+      </joint>
+
+      <joint name = "p${id}_base_joint"  type = "fixed">
+          <parent link="p${id}_base_link"/>
+          <child link="p${id}_rover_link"/>
+          <origin xyz="0.0 0.0 0.5" rpy="0 0 0" />
+          <axis xyz="0 0 0" rpy="0 0 0" />
+      </joint>
+  </xacro:macro>
+
+  <!-- 再帰的に複数ロボットを生成するマクロ -->
+  <xacro:macro name="create_robots" params="i n_robots">
+    <xacro:if value="${i &lt; n_robots}">
+      <xacro:p_instance id="${i + 1}" x="${i * 2}" y="0"/>
+      <xacro:create_robots i="${i + 1}" n_robots="${n_robots}"/>
+    </xacro:if>
+  </xacro:macro>
+
+  <!-- 直接引数 num_robots を整数に変換してマクロに渡す -->
+  <xacro:create_robots i="0" n_robots="$(arg num_robots)"/>
+</robot>
