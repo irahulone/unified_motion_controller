@@ -1,0 +1,13 @@
+joy_cmd:
+  ros__parameters:
+    lx: "LY"
+    az: "RX"
+    en: "LB"
+    rover_sel: "Y"
+    mode_sel: "X"
+    hardware_sim_sel: "B"
+    heading_sel: "A"
+    broadcast: "RB"
+    revolution: "cross_lr"
+    prismatic: "cross_ud"
+    n_rover: 3
