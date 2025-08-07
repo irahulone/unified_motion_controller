@@ -247,6 +247,8 @@ class MinimalSubscriber(Node):
         eit=dx*math.cos(path_dir)+dy*math.sin(path_dir)
         ect=dx*math.sin(path_dir)-dy*math.cos(path_dir)
         headingerr=path_dir+Kpct*ect-theta
+        if abs(headingerr) >= math.pi/2:
+             headingerr=path_dir+math.copysign(1,headingerr)*math.pi/2-theta
         e_dist=eit
         return e_dist, headingerr, eit, ect
         
