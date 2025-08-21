@@ -17,13 +17,13 @@ class MinimalSubscriber(Node):
         super().__init__('pose_listener')
         self.pose_sub = self.create_subscription(
             Pose2D,
-            '/sim/p4/pose2D',
+            '/p1/pose2D',
             self.listener_callback,
             10)
         self.pose_sub  # prevent unused variable warning
       
 
-        self.pub_cmdvel = self.create_publisher(Twist, '/sim/p4/cmd_vel', 10)
+        self.pub_cmdvel = self.create_publisher(Twist, '/p1/cmd_vel', 10)
         
         self.joy_sub = self.create_subscription(
             Joy,
@@ -35,7 +35,7 @@ class MinimalSubscriber(Node):
         
         self.leader_sub = self.create_subscription(
             Pose2D,
-            '/sim/p3/pose2D',
+            '/p2/pose2D',
             self.leader_callback,
             10)
         
@@ -67,7 +67,7 @@ class MinimalSubscriber(Node):
         self.leadx=0.0
         self.leady=0.0
         self.testtime=0.0
-        self.log_path="/home/rsl-ros/Unified_Controller_Test_Data/unified_control_log.csv"
+        self.log_path="/home/research-pioneer/ros2_ws/unified_controller/Unified_Controller_Test_Data/unified_control_log.csv"
         self.csv_file=open(self.log_path, mode='w',newline='')
         self.csv_writer=csv.writer(self.csv_file)
         self.csv_writer.writerow(["mode","time","x","y","theta","linear_vel","angular_vel","pos_err","ang_err","err_it","err_ct","leader_x","leader_y","hdg_to_leader"])
@@ -88,7 +88,7 @@ class MinimalSubscriber(Node):
 
 
     def listener_callback(self, msg):
-        self.r_heading=msg.theta
+        self.r_heading=-msg.theta
         #self.r_heading = msg.data
         #self.get_logger().info('I heard: "%s"' % msg.data)
         #print(self.r_heading)
@@ -106,13 +106,13 @@ class MinimalSubscriber(Node):
         print(" ")
 
         if self.ctrl_mode==1: #heading
-            self.e_h = self.heading_set - self.r_heading 
+            self.e_h = (self.heading_set - self.r_heading + math.pi)%(2*math.pi) - math.pi
             self.e_d = 0
             Kaz=1.0 #angular gain
             Klx=0.0 #translational gain
             Vx=0.4 #translational constant
         elif self.ctrl_mode==2: #wp
-            self.e_h = self.des_heading - self.r_heading 
+            self.e_h = (self.des_heading - self.r_heading + math.pi)%(2*math.pi) - math.pi
             self.e_d = self.wp_distance
             Kaz=1.0 #angular gain
             Klx=0.0 #translational gain
@@ -121,7 +121,7 @@ class MinimalSubscriber(Node):
             elif self.e_d>=0.1:
                 Vx=0.4
         elif self.ctrl_mode==3: #follower
-            self.e_h = self.lead_hdg - self.r_heading 
+            self.e_h = (self.lead_hdg - self.r_heading+math.pi)%(2*math.pi)-math.pi 
             self.e_d = self.d2-self.des_follow_d
             Kaz=1.0 #angular gain
             Klx=0.2 #translational gain
@@ -155,7 +155,7 @@ class MinimalSubscriber(Node):
             	y_des=yend
             	Vx=0.0
             	self.e_d=self.get_distance(self.curx,self.cury,x_des,y_des)
-            	self.e_h=self.get_bearing(self.curx,self.cury,x_des,y_des)-self.r_heading
+            	self.e_h=(self.get_bearing(self.curx,self.cury,x_des,y_des)-self.r_heading+math.pi)%(2*math.pi)-math.pi
             	if self.get_distance(self.curx,self.cury,xend,yend)<0.01:
                     Vx=0.0
                     self.e_h=0.0	
@@ -166,7 +166,7 @@ class MinimalSubscriber(Node):
         elif self.ctrl_mode==5: #trajectory
             x=0.0
             y=0.0
-            tfinal=20.0
+            tfinal=60.0
             xend,yend,thetaend=self.path(x,y,tfinal,self.ctrl_mode)
             if self.last_mode!=5:
             	self.tstart=self.get_clock().now()
@@ -177,7 +177,7 @@ class MinimalSubscriber(Node):
             self.e_d,self.e_h,self.Eit,self.Ect=self.pathpoint(self.curx,self.cury,x_des,y_des,path_dir)
             if curt>=tfinal:
             	self.e_d=self.get_distance(self.curx,self.cury,xend,yend)
-            	self.e_h=self.get_bearing(self.curx,self.cury,xend,yend)-self.r_heading
+            	self.e_h=(self.get_bearing(self.curx,self.cury,xend,yend)-self.r_heading+math.pi)%(2*math.pi)-math.pi
             Kaz=0.4 #angular gain
             Klx=0.2 #translational gain
             if self.get_distance(self.curx,self.cury,xend,yend)<0.1:
@@ -198,16 +198,16 @@ class MinimalSubscriber(Node):
         self.testtime=(self.get_clock().now()-self.timer).nanoseconds/1e9
 
         self.uaz = Kaz*self.e_h
-        if self.uaz > 0.6:
-            self.uaz = 0.6
-        elif self.uaz < -0.6:
-            self.uaz = -0.6
+        if self.uaz > 0.4:
+            self.uaz = 0.4
+        elif self.uaz < -0.4:
+            self.uaz = -0.4
         
         self.ulx = Vx+Klx*self.e_d
-        if self.ulx > 0.4:
-            self.ulx = 0.4
-        elif self.ulx < -0.4:
-            self.ulx = -0.4
+        if self.ulx > 0.8:
+            self.ulx = 0.8
+        elif self.ulx < -0.8:
+            self.ulx = -0.8
             
 
         msg_cmd = Twist()
@@ -240,15 +240,15 @@ class MinimalSubscriber(Node):
     #    return x, y
 
     def pathpoint(self, x1, y1, xpath, ypath, path_dir):
-        Kpct=0.4
+        Kpct=0.8
         theta=self.r_heading
         dx=x1-xpath
         dy=y1-ypath
         eit=dx*math.cos(path_dir)+dy*math.sin(path_dir)
         ect=dx*math.sin(path_dir)-dy*math.cos(path_dir)
-        headingerr=path_dir+Kpct*ect-theta
+        headingerr=(path_dir-theta+math.pi)%(2*math.pi)-math.pi+Kpct*ect
         if abs(headingerr) >= math.pi/2:
-             headingerr=path_dir+math.copysign(1,headingerr)*math.pi/2-theta
+             headingerr=(path_dir-theta+math.pi)%(2*math.pi)-math.pi+math.copysign(1,headingerr)*math.pi/2
         e_dist=eit
         return e_dist, headingerr, eit, ect
         
@@ -260,7 +260,7 @@ class MinimalSubscriber(Node):
     	    dx=1.0
     	if mode==5:
     	    y=0.0
-    	    x=t
+    	    x=t/3.0
     	    dy=0.0
     	    dx=1.0
     	path_dir=math.atan2(dy,dx)
