@@ -88,7 +88,7 @@ class MinimalSubscriber(Node):
 
 
     def listener_callback(self, msg):
-        self.r_heading=-msg.theta
+        self.r_heading=-msg.theta+math.pi/2
         #self.r_heading = msg.data
         #self.get_logger().info('I heard: "%s"' % msg.data)
         #print(self.r_heading)
@@ -185,7 +185,7 @@ class MinimalSubscriber(Node):
                 self.e_d=0.0
                 self.e_h=0.0
             else:
-                Vx=0.2
+                Vx=0.0
         elif self.ctrl_mode==6: #joy
             self.e_d = self.j_lx #joy input translational
             self.e_h = self.j_az #joy input angular
@@ -242,7 +242,7 @@ class MinimalSubscriber(Node):
     def pathpoint(self, x1, y1, xpath, ypath, path_dir):
         Kpct=0.8
         theta=self.r_heading
-        dx=x1-xpath
+        dx=xpath-x1
         dy=y1-ypath
         eit=dx*math.cos(path_dir)+dy*math.sin(path_dir)
         ect=dx*math.sin(path_dir)-dy*math.cos(path_dir)
