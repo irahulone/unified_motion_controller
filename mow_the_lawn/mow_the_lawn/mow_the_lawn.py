@@ -99,29 +99,34 @@ class MinimalSubscriber(Node):
 
         
         if self.ctrl_mode==1: #mow
-            x=0.0
-            y=0.0
-            tfinal=2400.0
-            xend,yend,thetaend=self.path(x,y,tfinal,self.ctrl_mode)
-            if self.last_mode!=5:
+            X0=-25.0
+            Y0=-25.0
+            nominal_speed=0.4
+            Period=2*path_length/nominal_speed
+            path_spacing=5.0
+            path_length=50.0
+            field_distance=50.0
+            tfinal=field_distance*Period/path_spacing
+            xend,yend,thetaend=self.path(X0,Y0,tfinal,path_spacing,Period,path_length)
+            if self.last_mode!=1:
             	self.tstart=self.get_clock().now()
             curt=(self.get_clock().now()-self.tstart).nanoseconds/1e9
             if curt>=tfinal:
             	curt=tfinal
-            x_des,y_des,path_dir=self.path(x,y,curt,self.ctrl_mode)
+            x_des,y_des,path_dir=self.path(X0,Y0,curt,path_spacing,Period,path_length)
             self.e_d,self.e_h,self.Eit,self.Ect=self.pathpoint(self.curx,self.cury,x_des,y_des,path_dir)
             if curt>=tfinal:
             	self.e_d=self.get_distance(self.curx,self.cury,xend,yend)
             	self.e_h=(self.get_bearing(self.curx,self.cury,xend,yend)-self.r_heading+math.pi)%(2*math.pi)-math.pi
-            Kaz=0.4 #angular gain
-            Klx=0.2 #translational gain
+            Kaz=0.5 #angular gain
+            Klx=0.7 #translational gain
             if self.get_distance(self.curx,self.cury,xend,yend)<0.1:
                 Vx=0.0
                 self.e_d=0.0
                 self.e_h=0.0
             else:
                 Vx=0.0
-        elif self.ctrl_mode==6: #joy
+        elif self.ctrl_mode==2: #joy
             self.e_d = self.j_lx #joy input translational
             self.e_h = self.j_az #joy input angular
             Kaz=0.5 #angular gain
@@ -133,10 +138,10 @@ class MinimalSubscriber(Node):
         self.testtime=(self.get_clock().now()-self.timer).nanoseconds/1e9
 
         self.uaz = Kaz*self.e_h
-        if self.uaz > 0.4:
-            self.uaz = 0.4
-        elif self.uaz < -0.4:
-            self.uaz = -0.4
+        if self.uaz > 0.8:
+            self.uaz = 0.8
+        elif self.uaz < -0.8:
+            self.uaz = -0.8
         
         self.ulx = Vx+Klx*self.e_d
         if self.ulx > 0.8:
@@ -187,17 +192,11 @@ class MinimalSubscriber(Node):
         e_dist=eit
         return e_dist, headingerr, eit, ect
         
-    def path(self, X, Y, t, mode): #define path, path tangent, and any time based parametrics here
-    	if mode==4:
-    	    y=0.0
-    	    x=X
-    	    dy=0.0
-    	    dx=1.0
-    	if mode==1:
-    	    y=50*math.sin((2*math.pi/5)*(t/48))-25
-    	    x=t/48-25
-    	    dy=0.0
-    	    dx=1.0
+    def path(self, x0, y0, t, trail_width,period,path_distance): #define path, path tangent, and any time based parametrics here
+    	y=path_distance*math.sin((2*math.pi/trail_width)*(t*trail_width/period))+y0
+    	x=t*trail_width/period+x0
+    	dy=50.0*(2*math.pi/trail_width)*(trail_width/period)*math.cos((2*math.pi/trail_width)*(t*trail_width/period))
+    	dx=trail_width/period
     	path_dir=math.atan2(dy,dx)
     	return x,y,path_dir
         
@@ -207,26 +206,13 @@ class MinimalSubscriber(Node):
         press=msg.buttons[0]
         if press and not self.button:
             self.ctrl_mode += 1
-            if self.ctrl_mode>6:
+            if self.ctrl_mode>2:
             	self.ctrl_mode = 1
             self.get_logger().info(f"Control mode: {self.ctrl_mode}")
         self.button=press
-        
-    def leader_callback(self, msg):   
-    	self.leadx=msg.x
-    	self.leady=msg.y
-    	self.lead_hdg=self.get_bearing(self.curx, self.cury, self.leadx, self.leady)
-    	self.d2=self.get_distance(self.curx, self.cury, self.leadx, self.leady)
-    	#self.t2=self.get_clock().now()
-    	#self.dt=(self.t2-self.t1).nanoseconds/1e9
-    	#if self.d1 is not None and self.dt>0:
-    	#    dd=self.d2-self.d1
-    	#    self.v=abs(dd/self.dt)
-    	#self.d1=self.d2
-    	#self.t1=self.t2
-    	
+    
     def csv_record(self):
-    	self.csv_writer.writerow([self.ctrl_mode,self.testtime,self.curx,self.cury,self.r_heading,self.ulx,self.uaz,self.e_d,self.e_h,self.Eit,self.Ect,self.leadx,self.leady,self.lead_hdg])
+    	self.csv_writer.writerow([self.ctrl_mode,self.testtime,self.curx,self.cury,self.r_heading,self.ulx,self.uaz,self.e_d,self.e_h,self.Eit,self.Ect])
 
     		
 
