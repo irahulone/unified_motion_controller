@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'unified_controller'
+package_name = 'mow_the_lawn'
 
 setup(
     name=package_name,
@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'unified_controller = unified_controller.unified_controller:main',
+            'mow_the_lawn = mow_the_lawn.mow_the_lawn:main',
         ],
     },
 )
