@@ -80,7 +80,7 @@ class MinimalSubscriber(Node):
 
 
     def listener_callback(self, msg):
-        self.r_heading=-msg.theta+math.pi/2
+        self.r_heading=-msg.theta
         #self.r_heading = msg.data
         #self.get_logger().info('I heard: "%s"' % msg.data)
         #print(self.r_heading)
@@ -102,10 +102,11 @@ class MinimalSubscriber(Node):
             X0=-25.0
             Y0=-25.0
             nominal_speed=0.4
-            Period=2*path_length/nominal_speed
             path_spacing=5.0
             path_length=50.0
             field_distance=50.0
+            
+            Period=2*path_length/nominal_speed
             tfinal=field_distance*Period/path_spacing
             xend,yend,thetaend=self.path(X0,Y0,tfinal,path_spacing,Period,path_length)
             if self.last_mode!=1:
@@ -181,14 +182,14 @@ class MinimalSubscriber(Node):
 
     def pathpoint(self, x1, y1, xpath, ypath, path_dir):
         Kpct=0.8
-        theta=self.r_heading
-        dx=xpath-x1
+        theta=(self.r_heading)
+        dx=x1-xpath
         dy=y1-ypath
         eit=dx*math.cos(path_dir)+dy*math.sin(path_dir)
-        ect=dx*math.sin(path_dir)-dy*math.cos(path_dir)
-        headingerr=(path_dir-theta+math.pi)%(2*math.pi)-math.pi+Kpct*ect
-        if abs(headingerr) >= math.pi/2:
-             headingerr=(path_dir-theta+math.pi)%(2*math.pi)-math.pi+math.copysign(1,headingerr)*math.pi/2
+        ect=-dx*math.sin(path_dir)+dy*math.cos(path_dir)
+        headingerr=((path_dir-theta)+Kpct*ect+math.pi)%(2*math.pi)-math.pi
+        #if abs(headingerr) >= math.pi/2:
+        #     headingerr=(path_dir-theta+math.pi)%(2*math.pi)-math.pi+math.copysign(1,headingerr)*math.pi/2
         e_dist=eit
         return e_dist, headingerr, eit, ect
         
@@ -214,7 +215,6 @@ class MinimalSubscriber(Node):
     def csv_record(self):
     	self.csv_writer.writerow([self.ctrl_mode,self.testtime,self.curx,self.cury,self.r_heading,self.ulx,self.uaz,self.e_d,self.e_h,self.Eit,self.Ect])
 
-    		
 
 def main(args=None):
     rclpy.init(args=args)
