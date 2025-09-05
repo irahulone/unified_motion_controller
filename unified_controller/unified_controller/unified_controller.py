@@ -242,10 +242,10 @@ class MinimalSubscriber(Node):
     def pathpoint(self, x1, y1, xpath, ypath, path_dir):
         Kpct=0.8
         theta=self.r_heading
-        dx=xpath-x1
+        dx=x1-xpath
         dy=y1-ypath
         eit=dx*math.cos(path_dir)+dy*math.sin(path_dir)
-        ect=dx*math.sin(path_dir)-dy*math.cos(path_dir)
+        ect=-dx*math.sin(path_dir)+dy*math.cos(path_dir)
         headingerr=(path_dir-theta+math.pi)%(2*math.pi)-math.pi+Kpct*ect
         if abs(headingerr) >= math.pi/2:
              headingerr=(path_dir-theta+math.pi)%(2*math.pi)-math.pi+math.copysign(1,headingerr)*math.pi/2
