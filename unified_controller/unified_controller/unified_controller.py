@@ -88,7 +88,7 @@ class MinimalSubscriber(Node):
 
 
     def listener_callback(self, msg):
-        self.r_heading=-msg.theta+math.pi/2
+        self.r_heading=-msg.theta-math.pi/2
         #self.r_heading = msg.data
         #self.get_logger().info('I heard: "%s"' % msg.data)
         #print(self.r_heading)
@@ -246,11 +246,11 @@ class MinimalSubscriber(Node):
         dy=y1-ypath
         eit=dx*math.cos(path_dir)+dy*math.sin(path_dir)
         ect=-dx*math.sin(path_dir)+dy*math.cos(path_dir)
-        headingerr=(path_dir-theta+math.pi)%(2*math.pi)-math.pi+Kpct*ect
+        headingerr=(path_dir-theta+math.pi)%(2*math.pi)-math.pi-Kpct*ect
         if abs(headingerr) >= math.pi/2:
              headingerr=(path_dir-theta+math.pi)%(2*math.pi)-math.pi+math.copysign(1,headingerr)*math.pi/2
-        e_dist=eit
-        return e_dist, headingerr, eit, ect
+        e_dist=-eit
+        return e_dist, headingerr, -eit, -ect
         
     def path(self, X, Y, t, mode): #define path, path tangent, and any time based parametrics here
     	if mode==4:
