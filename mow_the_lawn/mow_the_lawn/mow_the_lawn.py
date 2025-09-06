@@ -80,7 +80,7 @@ class MinimalSubscriber(Node):
 
 
     def listener_callback(self, msg):
-        self.r_heading=-msg.theta
+        self.r_heading=-msg.theta+math.pi/2
         #self.r_heading = msg.data
         #self.get_logger().info('I heard: "%s"' % msg.data)
         #print(self.r_heading)
@@ -99,12 +99,12 @@ class MinimalSubscriber(Node):
 
         
         if self.ctrl_mode==1: #mow
-            X0=-25.0
-            Y0=-25.0
+            X0=-15.0
+            Y0=-15.0
             nominal_speed=0.4
             path_spacing=5.0
-            path_length=50.0
-            field_distance=50.0
+            path_length=30.0
+            field_distance=30.0
             
             Period=2*path_length/nominal_speed
             tfinal=field_distance*Period/path_spacing
@@ -187,11 +187,11 @@ class MinimalSubscriber(Node):
         dy=y1-ypath
         eit=dx*math.cos(path_dir)+dy*math.sin(path_dir)
         ect=-dx*math.sin(path_dir)+dy*math.cos(path_dir)
-        headingerr=((path_dir-theta)+Kpct*ect+math.pi)%(2*math.pi)-math.pi
+        headingerr=((path_dir-theta)-Kpct*ect+math.pi)%(2*math.pi)-math.pi
         #if abs(headingerr) >= math.pi/2:
         #     headingerr=(path_dir-theta+math.pi)%(2*math.pi)-math.pi+math.copysign(1,headingerr)*math.pi/2
-        e_dist=eit
-        return e_dist, headingerr, eit, ect
+        e_dist=-eit
+        return e_dist, headingerr, -eit, -ect
         
     def path(self, x0, y0, t, trail_width,period,path_distance): #define path, path tangent, and any time based parametrics here
     	y=path_distance*math.sin((2*math.pi/trail_width)*(t*trail_width/period))+y0
