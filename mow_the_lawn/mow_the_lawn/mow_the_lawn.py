@@ -99,8 +99,10 @@ class MinimalSubscriber(Node):
 
         
         if self.ctrl_mode==1: #mow
-            X0=-15.0
-            Y0=-15.0
+            X0=-25.0
+            Y0=0.0
+            x=0.0
+            y=0.0
             nominal_speed=0.4
             path_spacing=5.0
             path_length=30.0
@@ -108,13 +110,13 @@ class MinimalSubscriber(Node):
             
             Period=2*path_length/nominal_speed
             tfinal=field_distance*Period/path_spacing
-            xend,yend,thetaend=self.path(X0,Y0,tfinal,path_spacing,Period,path_length)
+            xend,yend,thetaend=self.path(X0,Y0,tfinal,path_spacing,Period,path_length,self.ctrl_mode,x,y)
             if self.last_mode!=1:
             	self.tstart=self.get_clock().now()
             curt=(self.get_clock().now()-self.tstart).nanoseconds/1e9
             if curt>=tfinal:
             	curt=tfinal
-            x_des,y_des,path_dir=self.path(X0,Y0,curt,path_spacing,Period,path_length)
+            x_des,y_des,path_dir=self.path(X0,Y0,curt,path_spacing,Period,path_length,self.ctrl_mode,x,y)
             self.e_d,self.e_h,self.Eit,self.Ect=self.pathpoint(self.curx,self.cury,x_des,y_des,path_dir)
             if curt>=tfinal:
             	self.e_d=self.get_distance(self.curx,self.cury,xend,yend)
@@ -133,6 +135,43 @@ class MinimalSubscriber(Node):
             Kaz=0.5 #angular gain
             Klx=0.7 #translational gain
             Vx=0 #translational constant
+        elif self.ctrl_mode==3: #path
+            Kaz=0.4 #angular gain
+            Klx=0.0 #translational gain
+            self.xstart=0
+            self.xfinal=20
+            self.ystart=0
+            self.yfinal=0
+            t=0
+            xend,yend,thetaend=self.path(X0,Y0,curt,path_spacing,Period,path_length,self.ctrl_mode,xfinal,yfinal)
+            min_dist=float('inf')
+            step=0.001
+            x=self.xstart
+            while x<=self.xfinal:
+            	y=self.ystart
+            	while y<=self.yfinal:
+            	    xpath,ypath,thetapath=self.path(X0,Y0,curt,path_spacing,Period,path_length,self.ctrl_mode,x,y)
+            	    dist=self.get_distance(self.curx,self.cury,xpath,ypath)
+            	    if dist<min_dist:
+            	    	min_dist=dist
+            	    	x_des=xpath
+            	    	y_des=ypath
+            	    	path_dir=thetapath
+            	    y=y+step
+            	x=x+step
+            if self.get_distance(x_des,y_des,xend,yend)<0.01:
+            	x_des=xend
+            	y_des=yend
+            	Vx=0.0
+            	self.e_d=self.get_distance(self.curx,self.cury,x_des,y_des)
+            	self.e_h=(self.get_bearing(self.curx,self.cury,x_des,y_des)-self.r_heading+math.pi)%(2*math.pi)-math.pi
+            	if self.get_distance(self.curx,self.cury,xend,yend)<0.01:
+                    Vx=0.0
+                    self.e_h=0.0	
+            else:
+            	e,self.e_h,self.Eit,self.Ect=self.pathpoint(self.curx,self.cury,x_des,y_des,path_dir)
+            	self.e_d=0.0
+            	Vx=0.4
         if self.last_mode !=self.ctrl_mode:
             self.timer=self.get_clock().now()
         self.last_mode=self.ctrl_mode
@@ -187,17 +226,23 @@ class MinimalSubscriber(Node):
         dy=y1-ypath
         eit=dx*math.cos(path_dir)+dy*math.sin(path_dir)
         ect=-dx*math.sin(path_dir)+dy*math.cos(path_dir)
-        headingerr=((path_dir-theta)-Kpct*ect+math.pi)%(2*math.pi)-math.pi
+        headingerr=((path_dir-theta)+Kpct*ect+math.pi)%(2*math.pi)-math.pi
         #if abs(headingerr) >= math.pi/2:
         #     headingerr=(path_dir-theta+math.pi)%(2*math.pi)-math.pi+math.copysign(1,headingerr)*math.pi/2
-        e_dist=-eit
-        return e_dist, headingerr, -eit, -ect
+        e_dist=eit
+        return e_dist, headingerr, eit, ect
         
-    def path(self, x0, y0, t, trail_width,period,path_distance): #define path, path tangent, and any time based parametrics here
-    	y=path_distance*math.sin((2*math.pi/trail_width)*(t*trail_width/period))+y0
-    	x=t*trail_width/period+x0
-    	dy=50.0*(2*math.pi/trail_width)*(trail_width/period)*math.cos((2*math.pi/trail_width)*(t*trail_width/period))
-    	dx=trail_width/period
+    def path(self, x0, y0, t, trail_width,period,path_distance,mode,X,Y): #define path, path tangent, and any time based parametrics here
+    	if mode==1:
+    	    y=path_distance*math.sin((2*math.pi/trail_width)*(t*trail_width/period))+y0
+    	    x=t*trail_width/period+x0
+    	    dy=path_distance*(2*math.pi/trail_width)*(trail_width/period)*math.cos((2*math.pi/trail_width)*(t*trail_width/period))
+    	    dx=trail_width/period
+    	if mode==3:
+    	    y=path_distance*math.sin((2*math.pi/trail_width)*(X))
+    	    x=X
+    	    dy=path_distance*(2*math.pi/trail_width)*math.cos((2*math.pi/trail_width)*(X))
+    	    dx=1.0
     	path_dir=math.atan2(dy,dx)
     	return x,y,path_dir
         
@@ -207,7 +252,7 @@ class MinimalSubscriber(Node):
         press=msg.buttons[0]
         if press and not self.button:
             self.ctrl_mode += 1
-            if self.ctrl_mode>2:
+            if self.ctrl_mode>3:
             	self.ctrl_mode = 1
             self.get_logger().info(f"Control mode: {self.ctrl_mode}")
         self.button=press
@@ -215,6 +260,7 @@ class MinimalSubscriber(Node):
     def csv_record(self):
     	self.csv_writer.writerow([self.ctrl_mode,self.testtime,self.curx,self.cury,self.r_heading,self.ulx,self.uaz,self.e_d,self.e_h,self.Eit,self.Ect])
 
+    		
 
 def main(args=None):
     rclpy.init(args=args)
